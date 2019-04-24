@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: GPL-2.0
+# Copyright (C) 2019-present Team LibreELEC (https://libreelec.tv)
+
+ACTION=="remove", GOTO="irtrans_end"
+SUBSYSTEM!="tty", GOTO="irtrans_end"
+KERNEL!="ttyUSB[0-9]*", GOTO="irtrans_end"
+
+#IMPORT{builtin}="usb_id"
+
+ATTRS{product}=="IRTrans*USB", SYMLINK+="irtrans%n"
+
+LABEL="irtrans_end"

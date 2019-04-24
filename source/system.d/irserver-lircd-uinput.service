@@ -1,0 +1,15 @@
+[Unit]
+Description=Forward IRTrans service events as uinput events
+Requires=service.irserver.service
+After=service.irserver.service
+
+[Service]
+ExecStart=/bin/sh /storage/.kodi/addons/service.irserver/bin/irserver_lircd_uinput.start
+TimeoutStopSec=1s
+Restart=on-failure
+RestartSec=5
+StartLimitInterval=30
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target

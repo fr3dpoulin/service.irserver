@@ -1,0 +1,69 @@
+#!/bin/sh
+
+# SPDX-License-Identifier: GPL-2.0
+# Copyright (C) 2019-present Team LibreELEC (https://libreelec.tv)
+
+. /etc/profile
+oe_setup_addon service.irserver
+
+# Ensure that we have the udev rule copied in the right location
+
+# TODO: how are we going to handle the upgrade case? Compare hashes?
+
+# TODO: how do we uninstall?
+
+if [ ! -f /storage/.config/udev.rules.d/81-irtrans.rules ]; then
+    cp $ADDON_DIR/udev.d/81-irtrans.rules /storage/.config/udev.rules.d/81-irtrans.rules
+
+    # udev is supposed to pick up the change in the
+    # /storage/.config/udev.rules.d (inotify) but we can't be certain
+    # that there won't be a delay in loading the new rule. Therefore,
+    # we will simply force a reload of the rules and trigger the
+    # re-application of rules on already connected devices.
+
+    udevadm control --reload
+    udevadm trigger
+fi
+
+# We need to enable the service that will forward IRTrans server event
+# to the kernel uinput
+
+# TODO: how are we going to handle upgrade?
+
+# TODO: how do we uinstall?
+
+systemctl is-enabled --quiet irserver-lircd-uinput
+if [ $? ]; then
+    systemctl enable $ADDON_DIR/system.d/irserver-lircd-uinput.service
+    systemctl start irserver-lircd-uinput
+fi
+
+# TODO: we probably need to make the /dev/irtrans device configurable
+# in case a user has more than 1 (is it really possible?)
+
+# If the device does not exist, exit with error code
+
+if [ ! -e /dev/irtrans0 ]; then
+    exit 255
+fi
+
+# Ensure the folder that will hold our socket exists
+
+if [ ! -d /run/lirc ]; then
+    mkdir -p /run/lirc
+    chmod 0755 /run/lirc
+fi
+
+# Make a copy of the old irserver.log
+
+if [ -e $ADDON_HOME/irserver.log ]; then
+    cp "$ADDON_HOME/irserver.log" "$ADDON_HOME/irserver_old.log"
+fi
+
+# TODO: make some of the options here configurable by the user
+
+exec irserver -pidfile /run/lirc/irtrans.pid \
+              -remotes $ADDON_DIR/remotes \
+              -logfile $ADDON_HOME/irserver.log \
+              -loglevel 4 \
+              /dev/irtrans0

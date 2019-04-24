@@ -1,0 +1,125 @@
+diff --git a/lowlevel.c b/lowlevel.c
+index a9f7716..ce0fdb7 100644
+--- a/lowlevel.c
++++ b/lowlevel.c
+@@ -525,11 +525,17 @@ int SetTransceiverModusEx (int bus,byte mode,word send_mask,byte addr,char *hotc
+ 	log_print (st,LOG_DEBUG);
+ 	sprintf (st,"  Extended Mode2:     %x\n",extended_mode2);
+ 	log_print (st,LOG_DEBUG);
+-	for (res=0;res < 8;res++) {
+-		sprintf (st,"  Extended ModeEx[%d]: %x\n",res,extended_mode_ex[res]);
+-		log_print (st,LOG_DEBUG);
+-	}
+-	sprintf (st,"  Hotcode LEN:        %d\n",hotlen);
++        if (extended_mode_ex != NULL) {
++                for (res=0;res < 8;res++) {
++                        sprintf (st,"  Extended ModeEx[%d]: %x\n",res,extended_mode_ex[res]);
++                        log_print (st,LOG_DEBUG);
++                }
++        }
++        else {
++                log_print ("  Extended ModeEx[]: not specified\n", LOG_DEBUG);
++        }
++
++        sprintf (st,"  Hotcode LEN:        %d\n",hotlen);
+ 	log_print (st,LOG_DEBUG);
+ 
+ 
+@@ -544,8 +550,10 @@ int SetTransceiverModusEx (int bus,byte mode,word send_mask,byte addr,char *hotc
+ 
+ 	md.hotcode[hotlen] = extended_mode;
+ 	md.hotcode[hotlen+1] = extended_mode2;
+-	md.hotcode[hotlen+2] = extended_mode_ex[0];
+-	md.hotcode[hotlen+3] = extended_mode_ex[1];
++        if (extended_mode_ex != NULL) {
++                md.hotcode[hotlen+2] = extended_mode_ex[0];
++                md.hotcode[hotlen+3] = extended_mode_ex[1];
++        }
+ 	IRDevices[bus].extended_mode = extended_mode;
+ 	IRDevices[bus].extended_mode2 = extended_mode2;
+ 	offset = 4;
+@@ -554,8 +562,9 @@ int SetTransceiverModusEx (int bus,byte mode,word send_mask,byte addr,char *hotc
+ 		memcpy (md.hotcode + hotlen + offset,extended_mode_ex + 2,6);
+ 		offset += 6;
+ 	}
+-	memcpy (IRDevices[bus].extended_mode_ex,extended_mode_ex,8);
+-
++        if (extended_mode_ex != NULL) {
++                memcpy (IRDevices[bus].extended_mode_ex,extended_mode_ex,8);
++        }
+ 
+ 	md.sbus_len = sizeof (MODE_BUFFER) + md.hotcode_len - (CODE_LENRAW - offset);
+ 
+@@ -3430,23 +3439,31 @@ int	get_devices (char sel[],byte testflag)  // Errflag = Continue bei USB Error
+ #endif
+ #ifdef LINUX
+ 		//LINUX Autofind USB devices
+-		if ((!strncmp (st + q,"usb",3) || !strncmp (st + q,"USB",3)) && !autoflag) {
+-			autoflag = 1;
++                if( !strncmp( st, "/dev/irtrans", 12 ) && !autoflag ) {
++                        autoflag = 1;
++                        res = 0;
++                        get_detail_deviceinfo ("",st,IF_USB);
++                }
++                else if ((!strncmp (st + q,"usb",3) || !strncmp (st + q,"USB",3)) && !autoflag) {
++                        autoflag = 1;
+ 			res = 0;
+ 			for (i=0;i < 16;i++) {
+-				sprintf (dst,"/dev/ttyUSB%d",i);
+-				if (get_detail_deviceinfo ("",dst,IF_USB)) {
+-					sprintf (dst,"/dev/usb/ttyUSB%d",i);
+-					if (get_detail_deviceinfo ("",dst,IF_USB)) {
+-						sprintf (dst,"/dev/tts/USB%d",i);
+-						if (get_detail_deviceinfo ("",dst,IF_USB)) {
+-							sprintf (dst,"/dev/usb/tts/%d",i);
+-							get_detail_deviceinfo ("",dst,IF_USB);
+-						}
+-					}
+-				}
+-			}
+-		}
++                                sprintf (dst,"/dev/irtrans%d",i);
++                                if (get_detail_deviceinfo ("",dst,IF_USB)) {
++                                        sprintf (dst,"/dev/ttyUSB%d",i);
++                                        if (get_detail_deviceinfo ("",dst,IF_USB)) {
++                                                sprintf (dst,"/dev/usb/ttyUSB%d",i);
++                                                if (get_detail_deviceinfo ("",dst,IF_USB)) {
++                                                        sprintf (dst,"/dev/tts/USB%d",i);
++                                                        if (get_detail_deviceinfo ("",dst,IF_USB)) {
++                                                                sprintf (dst,"/dev/usb/tts/%d",i);
++                                                                get_detail_deviceinfo ("",dst,IF_USB);
++                                                        }
++                                                }
++                                        }
++                                }
++                        }
++                }
+ 		else if ((!strncmp (st + q,"/dev/usb/tty",12) || !strncmp (st + q,"/dev/ttyUSB",11) || !strncmp (st + q,"/dev/usb/tts",12) ||
+ 				  !strncmp (st + q,"/dev/ttyusb",11) || !strncmp (st + q,"/dev/tts/USB",12)) && !autoflag) {
+ 			if (st[q + strlen (st+q) - 1] == ']') {
+diff --git a/server.c b/server.c
+index 0be9a28..30e6443 100644
+--- a/server.c
++++ b/server.c
+@@ -101,7 +101,7 @@ extern int hCom;
+ 
+ #ifdef LINUX
+ SOCKET local_socket;
+-#define LIRCD			"/dev/lircd"
++#define LIRCD			"/run/lirc/lircd.irtrans"
+ #define PERMISSIONS		0666
+ #endif
+ 
+diff --git a/xbmc.c b/xbmc.c
+index 63eb9f6..344828e 100644
+--- a/xbmc.c
++++ b/xbmc.c
+@@ -258,7 +258,7 @@ DWORD XBMC_GetPID (void)
+ 
+ 	xbmc_pid = 0;
+ 
+-	fp = popen( "ps aux|grep -v grep|grep -i xbmc.bin", "r");
++	fp = popen( "ps aux|grep -v grep|grep -i kodi.bin", "r");
+ 
+ 	fgets (ln,sizeof (ln),fp);	
+ 

@@ -1,0 +1,14 @@
+[Unit]
+Description=IRTrans service
+After=network.target
+
+[Service]
+ExecStart=/bin/sh /storage/.kodi/addons/service.irserver/bin/irserver.start
+TimeoutStopSec=1s
+Restart=on-failure
+RestartSec=5
+StartLimitInterval=30
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,19 @@
+- Look into a better way to install/enable the irserver-lircd-uinput
+  service
+
+- Uninstallation leaving the lircd-uinput server and the udev rule
+
+- Need to provide some configuration options to the user or at the
+  very least trigger off the DEBUG env variable to set loglevel.
+
+- Look into the argument of the irserver and see if there is anything
+  useful to expose.
+
+- I had to manually hack the mediacenter.rem file to provide uinput
+  compatible event name but it would be better to take it straight
+  from source package download. Also, need to add more remotes....
+
+- There is an error communication message that appears (which I
+  believe comes from the LCDd service) using the irtrans driver so I
+  suspect there is an issue with the order of the services that need
+  to be looked into.
