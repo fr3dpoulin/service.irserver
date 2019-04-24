@@ -37,7 +37,8 @@ The easiest way is to clone
 See this documentation: https://wiki.libreelec.tv/compile#compile_add-ons
 
 The produced zip file can them be scp'ed to your LibreELEC
-installation and use the "Install From Zip" option from within Kodi.
+installation and use the "Install From Zip" option from within Kodi:
+https://kodi.wiki/view/HOW-TO:Install_add-ons_from_zip_files
 
 ## Development
 
